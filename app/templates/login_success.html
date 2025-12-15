@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Berhasil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+        
+        .success-container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+        
+        .success-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #11998e;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .message {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .device-info {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        
+        .device-info h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .info-value {
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .price-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .btn-continue {
+            display: inline-block;
+            padding: 14px 40px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        
+        .btn-continue:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">✅</div>
+        <h1>Login Berhasil!</h1>
+        <p class="message">Selamat datang, <strong>{{ username }}</strong>! Anda sekarang terhubung ke internet.</p>
+        
+        <div class="device-info">
+            <h3>📱 Device Terdeteksi</h3>
+            
+            {% if device %}
+            <div class="info-row">
+                <span class="info-label">Brand</span>
+                <span class="info-value">{{ device.brand }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Model</span>
+                <span class="info-value">{{ device.marketing_name }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Kode Model</span>
+                <span class="info-value">{{ device.model_code }}</span>
+            </div>
+            {% if device.price_idr > 0 %}
+            <div class="info-row">
+                <span class="info-label">Est. Harga 2025</span>
+                <span class="price-badge">Rp {{ "{:,.0f}".format(device.price_idr).replace(',', '.') }}</span>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="info-row">
+                <span class="info-label">Device</span>
+                <span class="info-value">{{ parsed.model_code }}</span>
+            </div>
+            {% endif %}
+            
+            {% if client_hints and client_hints.model %}
+            <div class="info-row" style="background: #e8f5e9; margin: 5px -10px; padding: 5px 10px;">
+                <span class="info-label">Client Hints Model</span>
+                <span class="info-value" style="color: #2e7d32;">{{ client_hints.model }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="info-row">
+                <span class="info-label">OS</span>
+                <span class="info-value">{{ parsed.os_type | capitalize }} {{ parsed.os_version or '' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Browser</span>
+                <span class="info-value">{{ parsed.browser or 'Unknown' }}</span>
+            </div>
+        </div>
+        
+        <a href="https://www.google.com" class="btn-continue">Lanjut Browsing →</a>
+    </div>
+</body>
+</html>

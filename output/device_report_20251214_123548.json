@@ -1,0 +1,76 @@
+{
+  "generated_at": "2025-12-14T12:35:48.718804",
+  "statistics": {
+    "total_logins": 3,
+    "unique_users": 3,
+    "unique_devices": 2,
+    "total_estimated_value": 0,
+    "os_breakdown": {
+      "android": 1,
+      "windows": 2
+    }
+  },
+  "by_device": [
+    {
+      "brand": null,
+      "marketing_name": "Windows 10/11",
+      "model_code": "Windows 10/11",
+      "price_idr": 0,
+      "login_count": 2,
+      "unique_users": 2
+    },
+    {
+      "brand": null,
+      "marketing_name": "K",
+      "model_code": "K",
+      "price_idr": 0,
+      "login_count": 1,
+      "unique_users": 1
+    }
+  ],
+  "by_brand": [],
+  "logs": [
+    {
+      "id": 3,
+      "username": "jhjh",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "model_code": "Windows 10/11",
+      "brand": null,
+      "marketing_name": "Windows 10/11",
+      "price_idr": 0,
+      "os_type": "windows",
+      "os_version": "10.0",
+      "browser": "Chrome",
+      "ip_address": "127.0.0.1",
+      "login_time": "2025-12-14 05:34:12"
+    },
+    {
+      "id": 2,
+      "username": "User",
+      "user_agent": "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36",
+      "model_code": "K",
+      "brand": null,
+      "marketing_name": "K",
+      "price_idr": 0,
+      "os_type": "android",
+      "os_version": "10",
+      "browser": "Chrome",
+      "ip_address": "192.168.1.7",
+      "login_time": "2025-12-14 05:33:58"
+    },
+    {
+      "id": 1,
+      "username": "testuser",
+      "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+      "model_code": "Windows 10/11",
+      "brand": null,
+      "marketing_name": "Windows 10/11",
+      "price_idr": 0,
+      "os_type": "windows",
+      "os_version": "10.0",
+      "browser": "Chrome",
+      "ip_address": "127.0.0.1",
+      "login_time": "2025-12-14 05:23:20"
+    }
+  ]
+}

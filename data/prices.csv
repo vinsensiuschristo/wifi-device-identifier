@@ -1,0 +1,109 @@
+Brand,Marketing_Name,Price_IDR,Year
+Samsung,Samsung Galaxy S23,11500000,2025
+Samsung,Samsung Galaxy S23+,13500000,2025
+Samsung,Samsung Galaxy S23 Ultra,17000000,2025
+Samsung,Samsung Galaxy S22,8500000,2025
+Samsung,Samsung Galaxy S22+,10000000,2025
+Samsung,Samsung Galaxy S22 Ultra,13000000,2025
+Samsung,Samsung Galaxy S21 Ultra,10000000,2025
+Samsung,Samsung Galaxy S21+,7500000,2025
+Samsung,Samsung Galaxy S21,6000000,2025
+Samsung,Samsung Galaxy A54 5G,5500000,2025
+Samsung,Samsung Galaxy A53 5G,4500000,2025
+Samsung,Samsung Galaxy A34 5G,4000000,2025
+Samsung,Samsung Galaxy A14,2300000,2025
+Samsung,Samsung Galaxy M53 5G,4800000,2025
+Samsung,Samsung Galaxy Z Fold5,25000000,2025
+Samsung,Samsung Galaxy Z Flip5,14000000,2025
+Samsung,Samsung Galaxy Z Fold4,18000000,2025
+Samsung,Samsung Galaxy Z Flip4,10000000,2025
+Xiaomi,Xiaomi 12,7500000,2025
+Xiaomi,Xiaomi 12 Pro,10000000,2025
+Xiaomi,Xiaomi 13,9000000,2025
+Xiaomi,Xiaomi 13 Pro,12000000,2025
+Xiaomi,Xiaomi 14,11000000,2025
+Xiaomi,Xiaomi 14 Pro,14000000,2025
+Xiaomi,Xiaomi 14 Ultra,18000000,2025
+Xiaomi,Redmi Note 12,2500000,2025
+Xiaomi,Redmi Note 12 Pro,3800000,2025
+Xiaomi,Redmi Note 12 Pro+,4500000,2025
+Xiaomi,Redmi Note 13,2800000,2025
+Xiaomi,Redmi Note 13 Pro,4000000,2025
+Xiaomi,Redmi Note 13 Pro+,5500000,2025
+Xiaomi,Poco X5,3200000,2025
+Xiaomi,Poco X6 Pro,5000000,2025
+Xiaomi,Poco F6,6500000,2025
+Xiaomi,Xiaomi Mi 10T 5G,4500000,2025
+Xiaomi,POCO M4 Pro 4G,2800000,2025
+Xiaomi,POCO M4 Pro 5G,3200000,2025
+Xiaomi,POCO M5,1800000,2025
+Xiaomi,POCO M5s,2200000,2025
+Xiaomi,POCO M6 Pro 4G,2500000,2025
+Xiaomi,POCO M6 Pro 5G,3000000,2025
+OPPO,OPPO Find X6 Pro,15000000,2025
+OPPO,OPPO Find X7 Ultra,20000000,2025
+OPPO,OPPO Reno 10 Pro+,8500000,2025
+OPPO,OPPO Reno 11 Pro,7000000,2025
+OPPO,OPPO A98 5G,5000000,2025
+OPPO,OPPO A78 5G,3800000,2025
+OPPO,OPPO A57,2500000,2025
+OPPO,OPPO A96,3500000,2025
+Vivo,Vivo X90 Pro+,16000000,2025
+Vivo,Vivo X100 Pro,15000000,2025
+Vivo,Vivo V30 Pro,7000000,2025
+Vivo,Vivo V29 5G,5500000,2025
+Vivo,Vivo Y100 5G,4000000,2025
+Vivo,Vivo Y35,2800000,2025
+Realme,Realme GT 5 Pro,9000000,2025
+Realme,Realme 12 Pro+,6500000,2025
+Realme,Realme 12 Pro,5500000,2025
+Realme,Realme C67,2200000,2025
+Realme,Realme Narzo 60 Pro,4500000,2025
+Huawei,Huawei Mate 40 Pro,12000000,2025
+Huawei,Huawei Mate 60 Pro,18000000,2025
+Huawei,Huawei Mate 60,15000000,2025
+Huawei,Huawei Nova 12 Ultra,8000000,2025
+Huawei,Huawei Nova 11 Pro,6000000,2025
+Apple,Apple iPhone,12000000,2025
+Apple,Apple iPad,8000000,2025
+Apple,Apple iPhone 15,15000000,2025
+Apple,Apple iPhone 14,12000000,2025
+Apple,Apple iPhone 13,10000000,2025
+Google,Google Pixel 8,11000000,2025
+Google,Google Pixel 8 Pro,15000000,2025
+Google,Google Pixel 7a,7000000,2025
+Google,Google Pixel 7,9000000,2025
+Google,Google Pixel 7 Pro,12000000,2025
+OnePlus,OnePlus 12,13000000,2025
+OnePlus,OnePlus 11,10000000,2025
+OnePlus,OnePlus 11R,7500000,2025
+OnePlus,OnePlus Nord 3,5500000,2025
+Sony,Sony Xperia 1 V,18000000,2025
+Sony,Sony Xperia 5 V,14000000,2025
+Sony,Sony Xperia 10 V,6000000,2025
+ASUS,ASUS ROG Phone 8 Pro,18000000,2025
+ASUS,ASUS ROG Phone 7,15000000,2025
+ASUS,ASUS Zenfone 10,11000000,2025
+Lenovo,Lenovo Tab P12,6000000,2025
+Lenovo,Lenovo Tab M10 Plus,3000000,2025
+Honor,Honor Magic 6 Pro,14000000,2025
+Honor,Honor 90,6000000,2025
+Honor,Honor X9b,4500000,2025
+Infinix,Infinix Note 40 Pro+,4000000,2025
+Infinix,Infinix Hot 40 Pro,2500000,2025
+Infinix,Infinix GT 10 Pro,3500000,2025
+Infinix,Infinix Zero 30 5G,4500000,2025
+Infinix,Infinix Smart 8,1500000,2025
+Infinix,Infinix Note 30 5G,3200000,2025
+Tecno,Tecno Phantom V Fold,15000000,2025
+Tecno,Tecno Camon 30 Pro,5000000,2025
+Tecno,Tecno Spark 20 Pro+,2500000,2025
+ZTE,ZTE Blade V50 Design,2500000,2025
+ZTE,ZTE Nubia Z60 Ultra,12000000,2025
+Nokia,Nokia G42 5G,3500000,2025
+Nokia,Nokia C32,1800000,2025
+Motorola,Motorola Edge 50 Pro,8000000,2025
+Motorola,Motorola Edge 50 Ultra,12000000,2025
+Motorola,Motorola Moto G84 5G,4500000,2025
+Nothing,Nothing Phone 2,9000000,2025
+Nothing,Nothing Phone 1,6000000,2025
