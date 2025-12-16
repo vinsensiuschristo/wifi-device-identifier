@@ -77,6 +77,31 @@
         .badge-price { background: #e8f5e9; color: #388e3c; }
         .badge-count { background: #fff3e0; color: #f57c00; }
         
+        /* Styles baru untuk Price Scraping Feature */
+        .badge-tokopedia { 
+            background: linear-gradient(135deg, #00aa5b 0%, #00cc6a 100%); 
+            color: white; 
+        }
+        
+        /* Badge untuk sumber harga */
+        .badge-source-tokopedia { background: #00aa5b; color: white; }
+        .badge-source-database { background: #667eea; color: white; }
+        .badge-source-none { background: #ccc; color: #666; }
+        
+        /* Link ke Tokopedia */
+        .tokopedia-link {
+            font-size: 11px;
+            color: #00aa5b;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tokopedia-link:hover {
+            text-decoration: underline;
+            color: #008f4c;
+        }
+        
         .two-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
         @media (max-width: 900px) { .two-columns { grid-template-columns: 1fr; } }
         
@@ -215,7 +240,8 @@
                             <th>Device</th>
                             <th>OS</th>
                             <th>IP</th>
-                            <th>Harga</th>
+                            <th>Harga Database</th>
+                            <th>Harga Tokopedia</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -234,14 +260,41 @@
                                 <span class="badge badge-price">Rp {{ "{:,.0f}".format(log.price_idr).replace(',', '.') }}</span>
                                 {% else %}-{% endif %}
                             </td>
+                            <td>
+                                {% if log.scraped_price_min and log.scraped_price_max %}
+                                <!-- Harga dari Tokopedia tersedia -->
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span class="badge badge-tokopedia">
+                                        Rp {{ "{:,.0f}".format(log.scraped_price_min).replace(',', '.') }} - {{ "{:,.0f}".format(log.scraped_price_max).replace(',', '.') }}
+                                    </span>
+                                    {% if log.tokopedia_url %}
+                                    <a href="{{ log.tokopedia_url }}" target="_blank" class="tokopedia-link">
+                                        🔗 Lihat di Tokopedia
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% elif log.tokopedia_url %}
+                                <!-- Ada URL tapi tidak ada harga (scraping gagal) -->
+                                <a href="{{ log.tokopedia_url }}" target="_blank" class="tokopedia-link">
+                                    🔍 Cari di Tokopedia
+                                </a>
+                                {% else %}
+                                <span style="color: #888;">-</span>
+                                {% endif %}
+                            </td>
                         </tr>
                         <tr style="background: #f8f9fa;">
-                            <td colspan="6" style="font-size: 11px; color: #666; word-break: break-all;">
+                            <td colspan="7" style="font-size: 11px; color: #666; word-break: break-all;">
                                 <strong>User-Agent:</strong> {{ log.user_agent[:200] }}{% if log.user_agent|length > 200 %}...{% endif %}
+                                {% if log.price_source %}
+                                <span style="float: right;" class="badge badge-source-{{ log.price_source or 'none' }}">
+                                    Sumber: {{ log.price_source or 'none' }}
+                                </span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="6" style="text-align: center; color: #888;">Belum ada login</td></tr>
+                        <tr><td colspan="7" style="text-align: center; color: #888;">Belum ada login</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
