@@ -109,9 +109,11 @@ class LoginDatabase:
                     -- Informasi Harga (dari database lokal) --
                     price_idr INTEGER DEFAULT 0,     -- Harga dari database CSV
                     
-                    -- Informasi Harga (dari Tokopedia - FITUR BARU) --
-                    scraped_price_min INTEGER,       -- Harga minimum dari scraping
-                    scraped_price_max INTEGER,       -- Harga maksimum dari scraping
+                    -- Informasi Harga (dari Tokopedia - SMART SCRAPER) --
+                    scraped_price_min INTEGER,       -- Harga minimum valid (setelah cleaning)
+                    scraped_price_max INTEGER,       -- Harga maksimum valid (setelah cleaning)
+                    market_price INTEGER,            -- 🆕 Harga pasar wajar (MEDIAN)
+                    price_confidence TEXT,           -- 🆕 Tingkat kepercayaan: high/medium/low
                     price_source TEXT DEFAULT 'none', -- Sumber harga: database/tokopedia/none
                     tokopedia_url TEXT,              -- URL pencarian Tokopedia
                     
@@ -161,6 +163,8 @@ class LoginDatabase:
         new_columns = [
             ("scraped_price_min", "INTEGER"),
             ("scraped_price_max", "INTEGER"),
+            ("market_price", "INTEGER"),          # 🆕 Harga pasar wajar (MEDIAN)
+            ("price_confidence", "TEXT"),         # 🆕 Tingkat kepercayaan
             ("price_source", "TEXT DEFAULT 'none'"),
             ("tokopedia_url", "TEXT"),
         ]
@@ -190,9 +194,11 @@ class LoginDatabase:
                   price_idr: int = 0, os_type: str = None,
                   os_version: str = None, browser: str = None,
                   ip_address: str = None,
-                  # Parameter baru untuk fitur price scraping
+                  # Parameter untuk Smart Price Scraping
                   scraped_price_min: int = None,
                   scraped_price_max: int = None,
+                  market_price: int = None,           # 🆕 Harga pasar wajar (MEDIAN)
+                  price_confidence: str = None,       # 🆕 high/medium/low
                   price_source: str = 'none',
                   tokopedia_url: str = None) -> int:
         """
@@ -201,68 +207,36 @@ class LoginDatabase:
         ====================================================================
         
         Method ini dipanggil setiap kali ada user yang login ke captive portal.
-        Semua informasi tentang user dan device mereka akan disimpan.
         
-        ALUR KERJA:
-        1. Terima parameter dari routes.py
-        2. Insert data ke tabel login_logs
-        3. Return ID record yang baru dibuat
-        
-        Args:
-            username: Username yang diinput user saat login
-            user_agent: Raw User-Agent string dari browser
-            model_code: Kode model perangkat (contoh: SM-S911B)
-            brand: Merek perangkat (contoh: Samsung, Apple, Xiaomi)
-            marketing_name: Nama marketing (contoh: Galaxy S24, iPhone 15)
-            price_idr: Harga dari database lokal (CSV)
-            os_type: Tipe sistem operasi (android, ios, windows, dll)
-            os_version: Versi OS (contoh: 14.0, 17.1.2)
-            browser: Browser yang digunakan (Chrome, Safari, dll)
-            ip_address: IP address user
-            
-            --- PARAMETER BARU (Price Scraping) ---
-            scraped_price_min: Harga minimum dari Tokopedia
-            scraped_price_max: Harga maksimum dari Tokopedia
+        Args (Smart Scraper):
+            scraped_price_min: Harga minimum valid (after cleaning)
+            scraped_price_max: Harga maksimum valid (after cleaning)
+            market_price: 🆕 Harga pasar wajar (MEDIAN dari data bersih)
+            price_confidence: 🆕 Tingkat kepercayaan (high/medium/low)
             price_source: Sumber harga ('database', 'tokopedia', 'none')
             tokopedia_url: URL pencarian di Tokopedia
         
         Returns:
             int: ID record yang baru dibuat
-        
-        Example:
-            >>> db = LoginDatabase("database/wifi_devices.db")
-            >>> record_id = db.log_login(
-            ...     username="john_doe",
-            ...     user_agent="Mozilla/5.0 (Linux; Android 14; SM-S911B)...",
-            ...     model_code="SM-S911B",
-            ...     brand="Samsung",
-            ...     marketing_name="Galaxy S24",
-            ...     price_idr=15000000,
-            ...     scraped_price_min=14500000,
-            ...     scraped_price_max=16000000,
-            ...     price_source="tokopedia",
-            ...     tokopedia_url="https://tokopedia.com/search?q=..."
-            ... )
-            >>> print(f"Login logged with ID: {record_id}")
         """
         with self._get_connection() as conn:
             cursor = conn.cursor()
             
-            # Insert semua data ke database
-            # Kolom baru untuk scraped price ditambahkan di akhir
+            # Insert semua data ke database termasuk Smart Scraper fields
             cursor.execute('''
                 INSERT INTO login_logs 
                 (username, user_agent, model_code, brand, marketing_name,
                  price_idr, os_type, os_version, browser, ip_address,
-                 scraped_price_min, scraped_price_max, price_source, tokopedia_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 scraped_price_min, scraped_price_max, market_price, 
+                 price_confidence, price_source, tokopedia_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (username, user_agent, model_code, brand, marketing_name,
                   price_idr, os_type, os_version, browser, ip_address,
-                  scraped_price_min, scraped_price_max, price_source, tokopedia_url))
+                  scraped_price_min, scraped_price_max, market_price,
+                  price_confidence, price_source, tokopedia_url))
             
             conn.commit()
             
-            # Return ID record yang baru dibuat
             record_id = cursor.lastrowid
             print(f"[Database] Logged login for '{username}' with ID {record_id}")
             return record_id

@@ -77,10 +77,35 @@
         .badge-price { background: #e8f5e9; color: #388e3c; }
         .badge-count { background: #fff3e0; color: #f57c00; }
         
-        /* Styles baru untuk Price Scraping Feature */
+        /* 🧠 Smart Scraper Styles */
         .badge-tokopedia { 
             background: linear-gradient(135deg, #00aa5b 0%, #00cc6a 100%); 
             color: white; 
+        }
+        
+        /* Market Price Badge (MEDIAN) - Highlight utama */
+        .badge-market-price {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            padding: 6px 14px;
+        }
+        
+        /* Confidence Level Badges */
+        .badge-confidence-high { 
+            background: #2ecc71; 
+            color: white; 
+            font-size: 10px;
+        }
+        .badge-confidence-medium { 
+            background: #f39c12; 
+            color: white; 
+            font-size: 10px;
+        }
+        .badge-confidence-low { 
+            background: #e74c3c; 
+            color: white; 
+            font-size: 10px;
         }
         
         /* Badge untuk sumber harga */
@@ -261,8 +286,28 @@
                                 {% else %}-{% endif %}
                             </td>
                             <td>
-                                {% if log.scraped_price_min and log.scraped_price_max %}
-                                <!-- Harga dari Tokopedia tersedia -->
+                                {% if log.market_price %}
+                                <!-- 🧠 Smart Scraper: Market Price (MEDIAN) -->
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span class="badge badge-market-price">
+                                        💰 Rp {{ "{:,.0f}".format(log.market_price).replace(',', '.') }}
+                                    </span>
+                                    {% if log.price_confidence %}
+                                    <span class="badge badge-confidence-{{ log.price_confidence }}">
+                                        🎯 {{ log.price_confidence }}
+                                    </span>
+                                    {% endif %}
+                                    <span style="font-size: 10px; color: #666;">
+                                        Range: Rp {{ "{:,.0f}".format(log.scraped_price_min).replace(',', '.') }} - {{ "{:,.0f}".format(log.scraped_price_max).replace(',', '.') }}
+                                    </span>
+                                    {% if log.tokopedia_url %}
+                                    <a href="{{ log.tokopedia_url }}" target="_blank" class="tokopedia-link">
+                                        🔗 Lihat di Tokopedia
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% elif log.scraped_price_min and log.scraped_price_max %}
+                                <!-- Fallback: Range harga saja (tanpa market price) -->
                                 <div style="display: flex; flex-direction: column; gap: 4px;">
                                     <span class="badge badge-tokopedia">
                                         Rp {{ "{:,.0f}".format(log.scraped_price_min).replace(',', '.') }} - {{ "{:,.0f}".format(log.scraped_price_max).replace(',', '.') }}

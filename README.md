@@ -1,174 +1,87 @@
 # WiFi Device Identifier
 
-Aplikasi Python (Flask) untuk mengidentifikasi perangkat user yang login ke WiFi provider melalui parsing User-Agent header. **Fitur baru**: Scraping harga perangkat dari Tokopedia secara otomatis!
+Aplikasi Python (Flask) untuk mengidentifikasi perangkat user yang login ke WiFi provider melalui parsing User-Agent header. **🧠 Smart Scraper**: Scraping harga pasar wajar dari Tokopedia dengan metodologi statistik profesional!
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.10 atau lebih baru
-- pip (Python package manager)
+- Python 3.10+
+- pip
 
 ### Installation
 
-1. **Clone repository**
-   ```bash
-   git clone https://github.com/vinsensiuschristo/wifi-device-identifier.git
-   cd wifi-device-identifier
-   ```
-
-2. **Buat virtual environment**
-   ```bash
-   # Windows
-   python -m venv venv
-   venv\Scripts\activate
-
-   # Linux/Mac
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Running the Application
-
 ```bash
+# Clone & Setup
+git clone https://github.com/vinsensiuschristo/wifi-device-identifier.git
+cd wifi-device-identifier
+
+# Virtual Environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Linux/Mac
+
+# Install Dependencies
+pip install -r requirements.txt
+
+# Run
 python main.py
 ```
 
-Aplikasi akan berjalan di: **http://localhost:5000**
+Aplikasi: **http://localhost:5000**
 
 ---
 
-## 📱 Alur Kerja Aplikasi (Application Flow)
+## 🧠 Smart Price Scraper (Fitur Utama!)
 
-Berikut adalah penjelasan lengkap bagaimana aplikasi ini bekerja:
+Bukan scraper biasa! Menggunakan metodologi statistik untuk mendapatkan **Harga Pasar Wajar**.
 
-### 1️⃣ User Connect ke WiFi
-```
-[User] --> [Connect WiFi] --> [Redirect ke Captive Portal]
-```
-Ketika user mencoba terhubung ke WiFi, router akan mengarahkan mereka ke halaman login (captive portal).
-
-### 2️⃣ Login Page (GET /login)
-```
-[Server] --> [Send Login Page]
-         --> [Request Client Hints via Headers]
-```
-Server mengirim halaman login dan meminta browser untuk mengirim **Client Hints** - informasi tambahan tentang device yang lebih akurat dari User-Agent.
-
-### 3️⃣ User Submit Form (POST /login)
-```
-[User Submit] --> [Browser sends User-Agent + Client Hints]
-```
-Saat user submit form, browser mengirim:
-- **User-Agent**: String yang berisi info device (contoh: `Mozilla/5.0 (Linux; Android 14; SM-S911B)...`)
-- **Client Hints**: Header tambahan seperti `Sec-CH-UA-Model: "SM-S911B"`
-
-### 4️⃣ Parse User-Agent
-```
-[Server] --> [UserAgentParser] --> Extract:
-         - model_code: SM-S911B
-         - os_type: android
-         - os_version: 14
-         - browser: Chrome
-```
-Sistem mem-parse User-Agent untuk mengekstrak informasi device.
-
-### 5️⃣ Cari Device di Database
-```
-[model_code: SM-S911B] --> [devices.csv] --> {
-    brand: "Samsung",
-    marketing_name: "Galaxy S24",
-    price_idr: 15000000
-}
-```
-Kode model dicari di database CSV untuk mendapatkan nama marketing dan harga.
-
-### 6️⃣ 🆕 Scraping Harga dari Tokopedia
-```
-[Device Found] --> [TokopediaScraper] --> Search: "Samsung Galaxy S24"
-                                      --> Extract price range dari hasil
-                                      --> Return: min: 14.5jt, max: 16jt
-```
-**FITUR BARU!** Jika device ditemukan, sistem akan otomatis mencari harga di Tokopedia untuk mendapatkan range harga terkini.
-
-### 7️⃣ Simpan ke Database
-```
-[All Data] --> [SQLite Database] --> login_logs table
-```
-Semua informasi disimpan ke database SQLite termasuk:
-- Username, IP address
-- Device info (brand, model, marketing name)
-- Harga dari database dan harga dari Tokopedia
-- URL Tokopedia untuk referensi
-
-### 8️⃣ Dashboard Report
-```
-[Admin] --> [/dashboard] --> View:
-        - Total logins
-        - Unique devices
-        - Price estimates
-        - Tokopedia price comparison
-```
-Admin bisa melihat semua data di dashboard lengkap dengan link ke Tokopedia.
-
----
-
-## 📊 Diagram Alur Lengkap
+### Workflow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        WiFi DEVICE IDENTIFIER FLOW                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-    ┌──────────┐         ┌──────────────┐         ┌──────────────────┐
-    │   User   │ ──WiFi──▶ │ Captive      │ ──GET──▶ │ /login          │
-    │  Device  │         │  Portal       │         │ (Show Form)     │
-    └──────────┘         └──────────────┘         └──────────────────┘
-         │                                                  │
-         │                                                  ▼
-         │                                         ┌──────────────────┐
-         └───────────── Submit Form ─────────────▶│ POST /login      │
-                         (Username)                │ + User-Agent     │
-                                                   │ + Client Hints   │
-                                                   └────────┬─────────┘
-                                                            │
-              ┌─────────────────────────────────────────────┘
-              ▼
-    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-    │ UserAgentParser │───▶│  DeviceDatabase │───▶│TokopediaScraper │
-    │                 │    │   (devices.csv) │    │  (Harga Online) │
-    │ Extract:        │    │                 │    │                 │
-    │ - model_code    │    │ Match:          │    │ Scrape:         │
-    │ - os_type       │    │ - brand         │    │ - min_price     │
-    │ - browser       │    │ - marketing_name│    │ - max_price     │
-    └─────────────────┘    └─────────────────┘    └─────────────────┘
-              │                    │                      │
-              └────────────────────┼──────────────────────┘
-                                   │
-                                   ▼
-                         ┌─────────────────┐
-                         │  LoginDatabase  │
-                         │    (SQLite)     │
-                         │                 │
-                         │ Store:          │
-                         │ - user info     │
-                         │ - device info   │
-                         │ - db price      │
-                         │ - scraped price │
-                         │ - tokopedia url │
-                         └────────┬────────┘
-                                  │
-                    ┌─────────────┼─────────────┐
-                    ▼             ▼             ▼
-            ┌───────────┐ ┌───────────┐ ┌───────────────┐
-            │ Dashboard │ │ API JSON  │ │ Export CSV/   │
-            │ (HTML)    │ │ Endpoints │ │ JSON Reports  │
-            └───────────┘ └───────────┘ └───────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  1. URL SMART FILTER                                                 │
+│     • condition = NEW (baru saja)                                   │
+│     • seller = Official Store + Power Merchant                      │
+│     • sort = Ulasan Terbanyak (bukan harga terendah!)               │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│  2. SAMPLING                                                         │
+│     Ambil 10-20 harga dari toko terpercaya                          │
+│     Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]          │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│  3. DATA CLEANING (Kunci!)                                           │
+│     Buang 15% TERMURAH → Flash Sale, Promo, Penipuan                │
+│     Buang 15% TERMAHAL → Overprice, Stok lama                       │
+│     Sisa: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]                       │
+└──────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────────────┐
+│  4. MEDIAN CALCULATION                                               │
+│     Menggunakan MEDIAN (bukan rata-rata!)                           │
+│     Result: Rp 8.500.000 ← Harga Pasar Wajar                        │
+│     Confidence: HIGH (10+ samples)                                   │
+└──────────────────────────────────────────────────────────────────────┘
 ```
+
+### Kenapa MEDIAN bukan AVERAGE?
+
+```
+Data: [1jt, 8jt, 8jt, 8jt, 20jt]
+
+AVERAGE = 9jt   ← Terdistorsi oleh 1jt dan 20jt!
+MEDIAN  = 8jt   ← Stabil, tidak terpengaruh outlier
+```
+
+### Confidence Levels
+
+| Level | Samples | Arti |
+|-------|---------|------|
+| 🟢 HIGH | ≥10 | Sangat reliable |
+| 🟡 MEDIUM | 5-9 | Cukup reliable |
+| 🔴 LOW | <5 | Mungkin kurang akurat |
 
 ---
 
@@ -176,72 +89,16 @@ Admin bisa melihat semua data di dashboard lengkap dengan link ke Tokopedia.
 
 | Endpoint | Method | Deskripsi |
 |----------|--------|-----------|
-| `/login` | GET/POST | Captive portal login (capture User-Agent) |
-| `/dashboard` | GET | Admin dashboard & reports |
-| `/api/devices` | GET | API data devices yang login |
-| `/api/report` | GET | API report statistik |
-| `/api/test-ua` | GET | Test User-Agent parsing |
-| `/api/export/csv` | GET | Export data ke CSV |
-| `/api/export/json` | GET | Export data ke JSON |
-| `/api/scrape-price/<device>` | GET | 🆕 Manual scraping harga |
-| `/api/scraper-cache/clear` | POST | 🆕 Clear cache scraper |
-| `/api/clear-logs` | POST | Hapus semua logs |
+| `/login` | GET/POST | Captive portal |
+| `/dashboard` | GET | Admin dashboard |
+| `/api/scrape-price/<device>` | GET | 🧠 Manual Smart Scraping |
+| `/api/scraper-cache/clear` | POST | Clear cache |
+| `/api/devices` | GET | All devices JSON |
+| `/api/report` | GET | Statistics JSON |
+| `/api/export/csv` | GET | Export CSV |
 
----
+### Contoh API
 
-## 📁 Project Structure
-
-```
-wifi-device-identifier/
-├── main.py              # Entry point aplikasi
-├── config.py            # Konfigurasi aplikasi
-├── requirements.txt     # Python dependencies
-│
-├── app/                 # Application modules
-│   ├── __init__.py
-│   ├── routes.py        # Route definitions (dengan comments lengkap)
-│   ├── user_agent.py    # User-Agent parser
-│   └── templates/       # HTML templates
-│       ├── login.html
-│       ├── login_success.html
-│       └── dashboard.html
-│
-├── database/            # Database modules
-│   ├── __init__.py
-│   ├── device_db.py     # Device database (CSV)
-│   └── models.py        # SQLite models
-│
-├── scraper/             # 🆕 Price scraping modules
-│   ├── __init__.py
-│   └── price_scraper.py # Tokopedia price scraper
-│
-├── data/                # Data files
-│   ├── devices.csv      # Device database
-│   └── prices.csv       # Price database
-│
-├── output/              # Generated exports
-└── reports/             # Report generator
-```
-
----
-
-## 🆕 Fitur Price Scraping
-
-### Cara Kerja
-1. Saat device teridentifikasi, sistem membuat query pencarian (contoh: "Samsung Galaxy S24")
-2. Query dikirim ke Tokopedia search page
-3. Hasil HTML di-parse untuk extract harga
-4. Harga di-cache selama 1 jam untuk mengurangi request
-5. Range harga (min-max) ditampilkan di dashboard
-
-### Catatan Penting
-- **Rate Limiting**: Request dibatasi 1 per detik untuk menghindari blocking
-- **Caching**: Hasil di-cache 1 jam untuk efisiensi
-- **Fallback**: Jika scraping gagal, harga dari database lokal digunakan
-- **Legal**: Pastikan penggunaan sesuai dengan ToS Tokopedia
-
-### Manual Scraping
-Anda bisa test scraping manual via API:
 ```bash
 curl "http://localhost:5000/api/scrape-price/Samsung%20Galaxy%20S24"
 ```
@@ -252,45 +109,52 @@ Response:
   "success": true,
   "device": "Samsung Galaxy S24",
   "price": {
-    "min": 14500000,
-    "max": 16000000,
-    "avg": 15250000,
-    "product_count": 25
+    "market_price": 14500000,
+    "min": 14000000,
+    "max": 15500000
   },
-  "tokopedia_url": "https://tokopedia.com/search?q=..."
+  "confidence": "high",
+  "samples": 12
 }
 ```
 
 ---
 
-## 📊 Data Format
+## 📁 Structure
 
-### devices.csv
-```csv
-Brand,Model_Code,Marketing_Name
-Samsung,SM-S911B,Samsung Galaxy S23
-Xiaomi,2201117TG,Xiaomi 12
 ```
-
-### prices.csv
-```csv
-Brand,Marketing_Name,Price_IDR,Year
-Samsung,Samsung Galaxy S23,12000000,2025
+wifi-device-identifier/
+├── main.py
+├── config.py
+├── requirements.txt
+├── app/
+│   ├── routes.py          # All endpoints
+│   ├── user_agent.py      # UA parser
+│   └── templates/
+├── database/
+│   ├── device_db.py       # CSV database
+│   └── models.py          # SQLite models
+├── scraper/               # 🧠 Smart Scraper
+│   └── price_scraper.py   # Tokopedia scraper
+└── data/
+    ├── devices.csv
+    └── prices.csv
 ```
 
 ---
 
-## 🔧 Configuration
+## ⚠️ Notes untuk Intern
 
-Edit `config.py` untuk mengubah konfigurasi:
-- `SECRET_KEY` - Flask secret key
-- `DEBUG` - Debug mode (True/False)
+1. **Rate Limiting**: 2 detik antar request (jangan sampai kena ban IP kantor!)
+2. **Caching**: 1 jam untuk efisiensi
+3. **Fallback**: Kalau scraping gagal → pakai harga database CSV
 
----
+### Bisa Dijelaskan ke Atasan:
 
-## 👥 Team
-
-Untuk kontribusi, silakan buat branch baru dan submit pull request.
+> "Saya menggunakan metodologi Smart Scraper dengan:
+> - URL filtering ke Official Store & Power Merchant untuk validitas
+> - Statistical cleaning untuk membuang outlier (promo/overprice)
+> - Median calculation yang lebih robust daripada rata-rata"
 
 ---
 

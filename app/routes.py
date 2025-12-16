@@ -203,12 +203,18 @@ def login():
             print(f"[Login] Device not found in database")
         
         # ----------------------------------------------------------------------
-        # STEP 6: FITUR BARU - Scraping harga dari Tokopedia
+        # STEP 6: 🧠 SMART PRICE SCRAPING dari Tokopedia
         # ----------------------------------------------------------------------
-        # Jika device ditemukan, cari harga di Tokopedia untuk perbandingan
+        # Menggunakan metodologi "Smart Scraper":
+        # - URL Filter: Official Store, Power Merchant, Barang Baru, Sort Ulasan
+        # - Data Cleaning: Buang 15% termurah & termahal (outlier)
+        # - Calculation: MEDIAN (lebih akurat dari rata-rata)
+        
         scraped_price_min = None
         scraped_price_max = None
+        market_price = None       # 🆕 Harga pasar wajar (MEDIAN)
         price_source = 'none'
+        price_confidence = None   # 🆕 Tingkat kepercayaan (high/medium/low)
         tokopedia_url = None
         
         if device and device.marketing_name:
@@ -216,26 +222,31 @@ def login():
             # Contoh: "Samsung Galaxy S24 Ultra"
             search_query = f"{device.brand} {device.marketing_name}"
             
-            print(f"[Login] Scraping price for: {search_query}")
+            print(f"[Login] 🧠 Smart Scraping price for: {search_query}")
             
-            # Lakukan scraping ke Tokopedia
-            scraped = tokopedia_scraper.search_price(search_query)
+            # Lakukan scraping dengan Smart Scraper
+            # Method get_market_price mengembalikan MarketPrice object
+            scraped = tokopedia_scraper.get_market_price(search_query)
             
             if scraped:
                 # Scraping berhasil!
                 scraped_price_min = scraped.min_price
                 scraped_price_max = scraped.max_price
+                market_price = scraped.market_price      # 🆕 MEDIAN price
+                price_confidence = scraped.confidence    # 🆕 Confidence level
                 tokopedia_url = scraped.search_url
                 price_source = 'tokopedia'
                 
-                print(f"[Login] Tokopedia price found: Rp {scraped_price_min:,} - Rp {scraped_price_max:,}")
+                print(f"[Login] ✅ Market Price: Rp {market_price:,}")
+                print(f"[Login] 📊 Range: Rp {scraped_price_min:,} - Rp {scraped_price_max:,}")
+                print(f"[Login] 🎯 Confidence: {price_confidence} ({scraped.sample_count} samples)")
             else:
                 # Scraping gagal, gunakan harga dari database jika ada
                 if device.price_idr > 0:
                     price_source = 'database'
                     print(f"[Login] Using database price: Rp {device.price_idr:,}")
                 else:
-                    print(f"[Login] No price available")
+                    print(f"[Login] ❌ No price available")
         
             # Generate URL Tokopedia untuk referensi (meskipun scraping gagal)
             if not tokopedia_url:
@@ -249,7 +260,7 @@ def login():
         if ch_model:
             extended_ua += f" [CH-Model: {ch_model}]"
         
-        # Log ke database dengan semua informasi
+        # Log ke database dengan semua informasi (termasuk Smart Scraper data)
         login_db.log_login(
             username=username,
             user_agent=extended_ua,
@@ -261,9 +272,11 @@ def login():
             os_version=parsed.os_version,
             browser=parsed.browser,
             ip_address=ip_address,
-            # Parameter baru untuk scraped price
+            # Smart Scraper parameters
             scraped_price_min=scraped_price_min,
             scraped_price_max=scraped_price_max,
+            market_price=market_price,            # 🆕 Harga pasar (MEDIAN)
+            price_confidence=price_confidence,    # 🆕 Confidence level
             price_source=price_source,
             tokopedia_url=tokopedia_url
         )
