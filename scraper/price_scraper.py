@@ -482,92 +482,116 @@ class TokopediaScraper:
     def _clean_prices(self, prices: List[int]) -> List[int]:
         """
         ====================================================================
-        🧹 DATA CLEANING - Kunci Keberhasilan Smart Scraper!
+        🧹 DATA CLEANING - IQR-Based Outlier Detection
         ====================================================================
         
-        METHOD: Trimmed Data / Winsorization
+        METHOD: Interquartile Range (IQR) Outlier Detection
+        
+        Ini adalah metode statistik yang mendeteksi outlier berdasarkan
+        seberapa JAUH suatu nilai dari "cluster" data normal.
         
         LANGKAH:
-        1. Sort harga dari terendah ke tertinggi
-        2. Buang 15% data TERMURAH (Flash Sale, Promo, Penipuan)
-        3. Buang 15% data TERMAHAL (Toko lupa update, Overprice)
-        4. Sisakan 70% data DI TENGAH = "Harga Normal"
+        1. Hitung Q1 (kuartil 25%) dan Q3 (kuartil 75%)
+        2. Hitung IQR = Q3 - Q1 (jarak antar kuartil)
+        3. Tentukan batas: 
+           - Lower Bound = Q1 - (1.5 * IQR)
+           - Upper Bound = Q3 + (1.5 * IQR)
+        4. Buang semua nilai di luar batas tersebut
         
-        KENAPA INI PENTING?
-        - Flash Sale: 1 toko promo gila-gilaan → BUANG
-        - Penipuan: Harga aneh di bawah pasar → BUANG
-        - Overprice: Toko sudut yang harga tinggi → BUANG
+        KENAPA IQR?
+        - Mendeteksi outlier berdasarkan DISTANCE, bukan persentase tetap
+        - Harga yang "jauh berbeda" dari cluster akan terdeteksi
+        - Lebih cerdas daripada sekadar buang 15% atas/bawah
         
         CONTOH:
-        Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.6jt, 8.7jt, 11jt]
+        Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]
         
-        Buang bawah (15%): [4.5jt] → hilang (Flash Sale)
-        Buang atas (15%): [11jt] → hilang (Overprice)
+        Q1 = 8.4jt, Q3 = 8.65jt
+        IQR = 8.65 - 8.4 = 0.25jt
+        Lower Bound = 8.4 - (1.5 * 0.25) = 8.025jt
+        Upper Bound = 8.65 + (1.5 * 0.25) = 9.025jt
         
-        Clean: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.6jt, 8.7jt]
+        Outliers: 4.5jt (< 8.025) dan 11jt (> 9.025) → BUANG
         
-        Median dari clean = 8.55jt ← HARGA PASAR WAJAR!
+        Clean: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]
+        
+        Average dari clean = 8.54jt ← HARGA PASAR WAJAR!
         """
-        if len(prices) < 3:
-            # Data terlalu sedikit, tidak perlu cleaning
+        if len(prices) < 4:
+            # Data terlalu sedikit untuk IQR, tidak perlu cleaning
             return prices
         
         # Sort dari terendah ke tertinggi
         sorted_prices = sorted(prices)
+        n = len(sorted_prices)
         
-        # Hitung berapa data yang akan dibuang
-        total = len(sorted_prices)
-        cut_bottom = int(total * self.TRIM_BOTTOM_PERCENT)
-        cut_top = int(total * self.TRIM_TOP_PERCENT)
+        # Hitung Q1 (25th percentile) dan Q3 (75th percentile)
+        q1_index = n // 4
+        q3_index = (3 * n) // 4
         
-        # Minimal buang 1 jika ada cukup data
-        if total >= 6:
-            cut_bottom = max(1, cut_bottom)
-            cut_top = max(1, cut_top)
+        q1 = sorted_prices[q1_index]
+        q3 = sorted_prices[q3_index]
         
-        # Slicing: buang bawah dan atas
-        if cut_top == 0:
-            clean_prices = sorted_prices[cut_bottom:]
-        else:
-            clean_prices = sorted_prices[cut_bottom : -cut_top]
+        # Hitung IQR
+        iqr = q3 - q1
         
-        print(f"[SmartScraper] 🧹 Cleaning: {total} → {len(clean_prices)} samples")
-        print(f"[SmartScraper]    Removed: {cut_bottom} lowest, {cut_top} highest")
+        # Tentukan batas (menggunakan 1.5 * IQR sebagai standard)
+        lower_bound = q1 - (1.5 * iqr)
+        upper_bound = q3 + (1.5 * iqr)
+        
+        # Filter harga yang di dalam batas
+        clean_prices = [p for p in sorted_prices if lower_bound <= p <= upper_bound]
+        
+        # Hitung berapa yang dibuang
+        removed_low = len([p for p in sorted_prices if p < lower_bound])
+        removed_high = len([p for p in sorted_prices if p > upper_bound])
+        
+        print(f"[SmartScraper] 🧹 IQR Cleaning: {n} → {len(clean_prices)} samples")
+        print(f"[SmartScraper]    Q1={q1:,} Q3={q3:,} IQR={iqr:,}")
+        print(f"[SmartScraper]    Bounds: {lower_bound:,.0f} - {upper_bound:,.0f}")
+        print(f"[SmartScraper]    Removed: {removed_low} outliers low, {removed_high} outliers high")
+        
+        # Fallback: jika semua data terbuang, kembalikan data asli
+        if len(clean_prices) < 2:
+            print(f"[SmartScraper] ⚠️ Too many outliers removed, using original data")
+            return prices
         
         return clean_prices
     
     def _calculate_market_price(self, prices: List[int]) -> int:
         """
-        Hitung MARKET PRICE menggunakan MEDIAN
+        Hitung MARKET PRICE menggunakan AVERAGE (Rata-rata)
         
-        KENAPA MEDIAN, BUKAN MEAN (RATA-RATA)?
-        ==========================================
+        METODOLOGI:
+        ============
+        Setelah outlier dibuang dengan IQR method, hitung rata-rata
+        dari semua harga yang tersisa.
         
-        Mean (Rata-rata):
-            Contoh: [1jt, 8jt, 8jt, 8jt, 20jt]
-            Mean = (1+8+8+8+20)/5 = 9jt ← Terdistorsi!
+        KENAPA AVERAGE SEKARANG OK?
+        ===========================
+        - Outlier sudah dibuang dengan IQR → data bersih
+        - Rata-rata dari data bersih = harga pasar yang wajar
+        - Semua harga yang tersisa punya kontribusi yang sama
         
-        Median (Nilai Tengah):
-            Contoh: [1jt, 8jt, 8jt, 8jt, 20jt]
-            Median = 8jt ← Stabil!
+        CONTOH:
+        =======
+        Clean prices: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]
+        Average = (8.4 + 8.5 + 8.5 + 8.6 + 8.7) / 5 = 8.54jt
         
-        Median tidak terpengaruh oleh nilai ekstrem di ujung.
-        Kalau ada 1 toko promo atau 1 toko mahal, median tetap OK.
-        
-        ALASAN BUAT LAPORAN KE ATASAN:
-        "Saya menggunakan Median karena lebih robust terhadap outlier.
-        Kalau ada flash sale atau toko overprice, hasilnya tetap akurat
-        karena Median mengambil nilai tengah, bukan rata-rata yang bisa
-        terdistorsi oleh nilai ekstrem."
+        Market Price: Rp 8.540.000
         """
         if not prices:
             return 0
         
-        # Gunakan statistics.median (built-in Python)
-        median_price = statistics.median(prices)
+        # Hitung rata-rata dari semua harga bersih
+        avg_price = sum(prices) / len(prices)
         
         # Round ke ribuan terdekat untuk angka lebih rapi
-        rounded = round(median_price / 1000) * 1000
+        rounded = round(avg_price / 1000) * 1000
+        
+        print(f"[SmartScraper] 📐 Calculation: Average of {len(prices)} clean prices")
+        print(f"[SmartScraper]    Prices: {[f'{p:,}' for p in prices[:5]]}{'...' if len(prices) > 5 else ''}")
+        print(f"[SmartScraper]    Average: {avg_price:,.0f} → Rounded: {rounded:,}")
         
         return rounded
     

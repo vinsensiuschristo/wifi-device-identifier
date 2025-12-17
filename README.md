@@ -52,27 +52,39 @@ Bukan scraper biasa! Menggunakan metodologi statistik untuk mendapatkan **Harga 
 └──────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌──────────────────────────────────────────────────────────────────────┐
-│  3. DATA CLEANING (Kunci!)                                           │
-│     Buang 15% TERMURAH → Flash Sale, Promo, Penipuan                │
-│     Buang 15% TERMAHAL → Overprice, Stok lama                       │
+│  3. IQR OUTLIER DETECTION (Kunci!)                                   │
+│     Deteksi outlier berdasarkan JARAK dari cluster:                 │
+│     Q1=8.4jt, Q3=8.65jt, IQR=0.25jt                                 │
+│     Bounds: 8.025jt - 9.025jt                                       │
+│     4.5jt & 11jt = OUTLIER → BUANG!                                 │
 │     Sisa: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]                       │
 └──────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌──────────────────────────────────────────────────────────────────────┐
-│  4. MEDIAN CALCULATION                                               │
-│     Menggunakan MEDIAN (bukan rata-rata!)                           │
-│     Result: Rp 8.500.000 ← Harga Pasar Wajar                        │
-│     Confidence: HIGH (10+ samples)                                   │
+│  4. AVERAGE CALCULATION                                              │
+│     Rata-rata dari data bersih (outlier sudah dibuang)              │
+│     (8.4 + 8.5 + 8.5 + 8.6 + 8.7) / 5 = 8.54jt                     │
+│     Result: Rp 8.540.000 ← Harga Pasar Wajar                        │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Kenapa MEDIAN bukan AVERAGE?
+### Kenapa IQR + AVERAGE?
 
 ```
-Data: [1jt, 8jt, 8jt, 8jt, 20jt]
+Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]
 
-AVERAGE = 9jt   ← Terdistorsi oleh 1jt dan 20jt!
-MEDIAN  = 8jt   ← Stabil, tidak terpengaruh outlier
+IQR Method:
+  Q1 = 8.4jt (25th percentile)
+  Q3 = 8.65jt (75th percentile)
+  IQR = 0.25jt
+  Lower Bound = Q1 - 1.5*IQR = 8.025jt
+  Upper Bound = Q3 + 1.5*IQR = 9.025jt
+
+  4.5jt < 8.025jt → OUTLIER (terlalu murah)
+  11jt > 9.025jt → OUTLIER (terlalu mahal)
+
+Clean: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]
+AVERAGE = 8.54jt ← Harga Pasar Wajar!
 ```
 
 ### Confidence Levels
@@ -140,24 +152,3 @@ wifi-device-identifier/
     ├── devices.csv
     └── prices.csv
 ```
-
----
-
-## ⚠️ Notes untuk Intern
-
-1. **Rate Limiting**: 2 detik antar request (jangan sampai kena ban IP kantor!)
-2. **Caching**: 1 jam untuk efisiensi
-3. **Fallback**: Kalau scraping gagal → pakai harga database CSV
-
-### Bisa Dijelaskan ke Atasan:
-
-> "Saya menggunakan metodologi Smart Scraper dengan:
-> - URL filtering ke Official Store & Power Merchant untuk validitas
-> - Statistical cleaning untuk membuang outlier (promo/overprice)
-> - Median calculation yang lebih robust daripada rata-rata"
-
----
-
-## 📄 License
-
-MIT License
