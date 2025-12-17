@@ -22,12 +22,63 @@ venv\Scripts\activate  # Windows
 
 # Install Dependencies
 pip install -r requirements.txt
+```
 
-# Run
+---
+
+## ▶️ Cara Menjalankan
+
+### Option 1: Local Only (Development)
+
+```bash
 python main.py
 ```
 
-Aplikasi: **http://localhost:5000**
+Output:
+```
+==================================================
+🌐 WiFi Device Identifier
+==================================================
+📍 Login Page:   http://localhost:5000/login
+📊 Dashboard:    http://localhost:5000/dashboard
+==================================================
+```
+
+**Akses:** `http://localhost:5000` (hanya bisa diakses dari komputer yang sama)
+
+---
+
+### Option 2: Public URL via Ngrok (Production/Testing)
+
+```bash
+python run_with_ngrok.py
+```
+
+Output:
+```
+============================================================
+🌐 WiFi Device Identifier - PUBLIC ACCESS via Ngrok
+============================================================
+📱 PUBLIC URL:    https://xxxx-xxx-xxx.ngrok-free.app
+📍 Local URL:     http://localhost:5000
+============================================================
+
+👉 Buka URL ini dari HP Anda:
+   https://xxxx-xxx-xxx.ngrok-free.app/login
+
+📊 Dashboard:
+   https://xxxx-xxx-xxx.ngrok-free.app/dashboard
+============================================================
+```
+
+**Akses:** URL `https://xxxx-xxx-xxx.ngrok-free.app` yang muncul di terminal (dinamis, berubah setiap kali run)
+
+| Fitur | Local (`main.py`) | Ngrok (`run_with_ngrok.py`) |
+|-------|-------------------|----------------------------|
+| Akses dari komputer lain | ❌ | ✅ |
+| Akses dari HP | ❌ | ✅ |
+| URL tetap | ✅ localhost:5000 | ❌ berubah tiap run |
+| Butuh internet | ❌ | ✅ |
 
 ---
 
