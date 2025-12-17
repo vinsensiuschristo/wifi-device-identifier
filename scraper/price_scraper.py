@@ -237,7 +237,7 @@ class TokopediaScraper:
         
         print(f"[SmartScraper] 📊 Raw data: {len(raw_prices)} harga ditemukan")
         
-        # STEP 5: Data Cleaning (Buang Outlier)
+        # STEP 5: Data Cleaning (Buang Outlier) - High-speed mode
         clean_prices = self._clean_prices(raw_prices)
         
         if len(clean_prices) < self.MIN_SAMPLES:
@@ -245,7 +245,7 @@ class TokopediaScraper:
             # Fallback: gunakan semua data tanpa cleaning
             clean_prices = raw_prices
         
-        # STEP 6: Hitung Market Price (MEDIAN!)
+        # STEP 6: Hitung Market Price (AVERAGE dari cluster terbesar)
         market_price = self._calculate_market_price(clean_prices)
         
         # STEP 7: Tentukan Confidence Level
@@ -479,119 +479,91 @@ class TokopediaScraper:
     # PRIVATE METHODS - Statistical Cleaning
     # =========================================================================
     
-    def _clean_prices(self, prices: List[int]) -> List[int]:
+    def _clean_prices(self, prices: List[int], debug: bool = False) -> List[int]:
         """
         ====================================================================
-        🧹 DATA CLEANING - IQR-Based Outlier Detection
+        🧹 DATA CLEANING - Gap-Based Cluster Detection (Optimized)
         ====================================================================
         
-        METHOD: Interquartile Range (IQR) Outlier Detection
+        OPTIMIZED VERSION:
+        - O(n log n) untuk sorting, O(n) untuk sisanya
+        - Minimal memory allocation
+        - Debug logging optional (default OFF untuk speed)
         
-        Ini adalah metode statistik yang mendeteksi outlier berdasarkan
-        seberapa JAUH suatu nilai dari "cluster" data normal.
-        
-        LANGKAH:
-        1. Hitung Q1 (kuartil 25%) dan Q3 (kuartil 75%)
-        2. Hitung IQR = Q3 - Q1 (jarak antar kuartil)
-        3. Tentukan batas: 
-           - Lower Bound = Q1 - (1.5 * IQR)
-           - Upper Bound = Q3 + (1.5 * IQR)
-        4. Buang semua nilai di luar batas tersebut
-        
-        KENAPA IQR?
-        - Mendeteksi outlier berdasarkan DISTANCE, bukan persentase tetap
-        - Harga yang "jauh berbeda" dari cluster akan terdeteksi
-        - Lebih cerdas daripada sekadar buang 15% atas/bawah
-        
-        CONTOH:
-        Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]
-        
-        Q1 = 8.4jt, Q3 = 8.65jt
-        IQR = 8.65 - 8.4 = 0.25jt
-        Lower Bound = 8.4 - (1.5 * 0.25) = 8.025jt
-        Upper Bound = 8.65 + (1.5 * 0.25) = 9.025jt
-        
-        Outliers: 4.5jt (< 8.025) dan 11jt (> 9.025) → BUANG
-        
-        Clean: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]
-        
-        Average dari clean = 8.54jt ← HARGA PASAR WAJAR!
+        Args:
+            prices: List harga mentah
+            debug: Jika True, tampilkan log detail (default False)
         """
-        if len(prices) < 4:
-            # Data terlalu sedikit untuk IQR, tidak perlu cleaning
+        n = len(prices)
+        if n < 4:
             return prices
         
-        # Sort dari terendah ke tertinggi
+        # Sort sekali saja - O(n log n)
         sorted_prices = sorted(prices)
-        n = len(sorted_prices)
         
-        # Hitung Q1 (25th percentile) dan Q3 (75th percentile)
-        q1_index = n // 4
-        q3_index = (3 * n) // 4
+        # Hitung gaps dan threshold dalam satu pass - O(n)
+        gaps = [sorted_prices[i] - sorted_prices[i-1] for i in range(1, n)]
         
-        q1 = sorted_prices[q1_index]
-        q3 = sorted_prices[q3_index]
+        # Quick median menggunakan sorted position (sudah O(n) dari list comp)
+        sorted_gaps = sorted(gaps)
+        median_gap = sorted_gaps[len(gaps) // 2]
         
-        # Hitung IQR
-        iqr = q3 - q1
+        # Threshold: 3x median atau 10% range
+        price_range = sorted_prices[-1] - sorted_prices[0]
+        gap_threshold = max(median_gap * 3, price_range * 0.10)
         
-        # Tentukan batas (menggunakan 1.5 * IQR sebagai standard)
-        lower_bound = q1 - (1.5 * iqr)
-        upper_bound = q3 + (1.5 * iqr)
+        # Single pass cluster detection - O(n)
+        # Track cluster boundaries instead of creating sublists
+        cluster_starts = [0]
+        for i, gap in enumerate(gaps):
+            if gap > gap_threshold:
+                cluster_starts.append(i + 1)
+        cluster_starts.append(n)  # End marker
         
-        # Filter harga yang di dalam batas
-        clean_prices = [p for p in sorted_prices if lower_bound <= p <= upper_bound]
+        # Find largest cluster by size calculation only
+        largest_size = 0
+        largest_start = 0
+        largest_end = 0
         
-        # Hitung berapa yang dibuang
-        removed_low = len([p for p in sorted_prices if p < lower_bound])
-        removed_high = len([p for p in sorted_prices if p > upper_bound])
+        for i in range(len(cluster_starts) - 1):
+            start = cluster_starts[i]
+            end = cluster_starts[i + 1]
+            size = end - start
+            if size > largest_size:
+                largest_size = size
+                largest_start = start
+                largest_end = end
         
-        print(f"[SmartScraper] 🧹 IQR Cleaning: {n} → {len(clean_prices)} samples")
-        print(f"[SmartScraper]    Q1={q1:,} Q3={q3:,} IQR={iqr:,}")
-        print(f"[SmartScraper]    Bounds: {lower_bound:,.0f} - {upper_bound:,.0f}")
-        print(f"[SmartScraper]    Removed: {removed_low} outliers low, {removed_high} outliers high")
+        # Extract largest cluster - single slice operation
+        result = sorted_prices[largest_start:largest_end]
         
-        # Fallback: jika semua data terbuang, kembalikan data asli
-        if len(clean_prices) < 2:
-            print(f"[SmartScraper] ⚠️ Too many outliers removed, using original data")
-            return prices
+        # Optional debug logging
+        if debug:
+            print(f"[SmartScraper] 📊 Gap threshold: {gap_threshold:,.0f}")
+            print(f"[SmartScraper] 🧹 {n} → {len(result)} samples")
         
-        return clean_prices
+        return result if len(result) >= 2 else prices
     
-    def _calculate_market_price(self, prices: List[int]) -> int:
+    def _calculate_market_price(self, prices: List[int], debug: bool = False) -> int:
         """
-        Hitung MARKET PRICE menggunakan AVERAGE (Rata-rata)
+        Hitung MARKET PRICE menggunakan AVERAGE (Optimized)
         
-        METODOLOGI:
-        ============
-        Setelah outlier dibuang dengan IQR method, hitung rata-rata
-        dari semua harga yang tersisa.
-        
-        KENAPA AVERAGE SEKARANG OK?
-        ===========================
-        - Outlier sudah dibuang dengan IQR → data bersih
-        - Rata-rata dari data bersih = harga pasar yang wajar
-        - Semua harga yang tersisa punya kontribusi yang sama
-        
-        CONTOH:
-        =======
-        Clean prices: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]
-        Average = (8.4 + 8.5 + 8.5 + 8.6 + 8.7) / 5 = 8.54jt
-        
-        Market Price: Rp 8.540.000
+        OPTIMIZED VERSION:
+        - Single pass sum calculation
+        - Debug logging optional
         """
         if not prices:
             return 0
         
-        # Hitung rata-rata dari semua harga bersih
-        avg_price = sum(prices) / len(prices)
+        # Single pass - O(n)
+        total = sum(prices)
+        avg_price = total / len(prices)
         
-        # Round ke ribuan terdekat untuk angka lebih rapi
+        # Round ke ribuan terdekat
         rounded = round(avg_price / 1000) * 1000
         
-        print(f"[SmartScraper] 📐 Calculation: Average of {len(prices)} clean prices")
-        print(f"[SmartScraper]    Prices: {[f'{p:,}' for p in prices[:5]]}{'...' if len(prices) > 5 else ''}")
-        print(f"[SmartScraper]    Average: {avg_price:,.0f} → Rounded: {rounded:,}")
+        if debug:
+            print(f"[SmartScraper] 📐 Average of {len(prices)}: {rounded:,}")
         
         return rounded
     

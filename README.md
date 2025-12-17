@@ -48,44 +48,64 @@ Bukan scraper biasa! Menggunakan metodologi statistik untuk mendapatkan **Harga 
 ┌──────────────────────────────────────────────────────────────────────┐
 │  2. SAMPLING                                                         │
 │     Ambil 10-20 harga dari toko terpercaya                          │
-│     Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]          │
+│     Raw: [3.2jt, 4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]   │
 └──────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌──────────────────────────────────────────────────────────────────────┐
-│  3. IQR OUTLIER DETECTION (Kunci!)                                   │
-│     Deteksi outlier berdasarkan JARAK dari cluster:                 │
-│     Q1=8.4jt, Q3=8.65jt, IQR=0.25jt                                 │
-│     Bounds: 8.025jt - 9.025jt                                       │
-│     4.5jt & 11jt = OUTLIER → BUANG!                                 │
-│     Sisa: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]                       │
+│  3. GAP-BASED CLUSTER DETECTION (Kunci!)                             │
+│     Deteksi cluster berdasarkan GAP (jarak antar nilai):            │
+│                                                                      │
+│     Gaps: 3.2→4.5(1.3) 4.5→8.4(3.9!) 8.4→8.5(0.1) ... 8.7→11(2.3!) │
+│                              ↑ GAP BESAR            ↑ GAP BESAR     │
+│                                                                      │
+│     Cluster 1: [3.2, 4.5]               → 2 items                   │
+│     Cluster 2: [8.4, 8.5, 8.5, 8.6, 8.7] → 5 items ← TERBESAR!      │
+│     Cluster 3: [11, 11.5, 12]           → 3 items                   │
+│                                                                      │
+│     Ambil cluster TERBESAR, buang sisanya sebagai outlier!          │
 └──────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌──────────────────────────────────────────────────────────────────────┐
 │  4. AVERAGE CALCULATION                                              │
-│     Rata-rata dari data bersih (outlier sudah dibuang)              │
+│     Rata-rata dari cluster terbesar (outlier sudah dibuang)         │
 │     (8.4 + 8.5 + 8.5 + 8.6 + 8.7) / 5 = 8.54jt                     │
 │     Result: Rp 8.540.000 ← Harga Pasar Wajar                        │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-### Kenapa IQR + AVERAGE?
+### Kenapa Gap-Based Cluster Detection?
 
 ```
-Raw: [4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt]
+Raw: [3.2jt, 4.5jt, 8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt, 11jt, 11.5jt, 12jt]
 
-IQR Method:
-  Q1 = 8.4jt (25th percentile)
-  Q3 = 8.65jt (75th percentile)
-  IQR = 0.25jt
-  Lower Bound = Q1 - 1.5*IQR = 8.025jt
-  Upper Bound = Q3 + 1.5*IQR = 9.025jt
+Gap Analysis:
+  3.2 → 4.5  = 1.3jt
+  4.5 → 8.4  = 3.9jt  ← GAP BESAR! (pisahkan cluster)
+  8.4 → 8.5  = 0.1jt  ← Cluster (rapat)
+  8.5 → 8.5  = 0.0jt  ← Cluster
+  8.5 → 8.6  = 0.1jt  ← Cluster
+  8.6 → 8.7  = 0.1jt  ← Cluster
+  8.7 → 11   = 2.3jt  ← GAP BESAR! (pisahkan cluster)
+  11 → 11.5  = 0.5jt
+  11.5 → 12  = 0.5jt
 
-  4.5jt < 8.025jt → OUTLIER (terlalu murah)
-  11jt > 9.025jt → OUTLIER (terlalu mahal)
+Cluster terbesar: [8.4, 8.5, 8.5, 8.6, 8.7] (5 items)
+Outlier dibuang: [3.2, 4.5, 11, 11.5, 12]
 
-Clean: [8.4jt, 8.5jt, 8.5jt, 8.6jt, 8.7jt]
-AVERAGE = 8.54jt ← Harga Pasar Wajar!
+AVERAGE = (8.4+8.5+8.5+8.6+8.7)/5 = 8.54jt ← Harga Pasar Wajar!
 ```
+
+### ⚡ Performa (Optimized)
+
+| Operasi | Kompleksitas |
+|---------|--------------|
+| Sort data | O(n log n) |
+| Gap calculation | O(n) |
+| Cluster detection | O(n) |
+| Average | O(n) |
+| **Total** | **O(n log n)** |
+
+Sangat cepat untuk data 10-100 harga per produk!
 
 ### Confidence Levels
 
